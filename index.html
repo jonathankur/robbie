@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Robbie</title>
+ <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+	<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,700">
+      <script src="http://code.jquery.com/jquery-1.11.2.min.js"></script>
+	<script src="jquery.mobile-1.4.5.min.js"></script>
+<script src="jquery-ui.js"></script>
+<script src='phonegap.js'></script>
+
+<script type="text/javascript">
+
+var l=0;
+var r=0;
+var lcol='FFFFFF';
+var rcol='FFFFFF';
+
+function sendcmd(a,b)
+{ 
+  var url='http://jaydenkur.com.au/steam/robot/sendcmd.php?a='+a+'&b='+b;
+  $.ajax({url: url, 
+    success : function(result) {
+    }
+  });
+}
+
+</script>
+</head>
+
+<body onload="sendcmd(0,0)">
+<div data-role="page" id="intropage" >
+ <div role="main" class="ui-content">
+  <center>
+  <h3>Robbie Sample App</h3>
+    <div data-role="collapsible" data-collapsed="true">
+     <h4>Left Arm</h4>
+     <ul data-role="listview">
+      <li><a href="#" onclick="sendcmd(1,10);">Up</a></li>
+      <li><a href="#" onclick="sendcmd(1,80);">Side</a></li>
+      <li><a href="#" onclick="sendcmd(1,170);">Down</a></li>
+     </ul>
+    </div>
+    <div data-role="collapsible" data-collapsed="true">
+     <h4>Right Arm</h4>
+     <ul data-role="listview">
+      <li><a href="#" onclick="sendcmd(2,175);">Up</a></li>
+      <li><a href="#" onclick="sendcmd(2,110);">Side</a></li>
+      <li><a href="#" onclick="sendcmd(2,10);">Down</a></li>
+     </ul>
+    </div>
+
+   <div data-role="collapsible" data-collapsed="true">
+     <h4>Left Eye</h4>
+    <ul data-role="listview">
+      <li><a href="#" onclick="l=1; sendcmd(3,lcol);">Open</a></li>
+      <li><a href="#" onclick="l=0; sendcmd(4,lcol);">Close</a></li>
+      <li><a href="#" onclick="lcol='FFFFFF'; sendcmd(4-l,lcol);">White</a></li>
+      <li><a href="#" onclick="lcol='FF0000'; sendcmd(4-l,lcol);">Red</a></li>
+      <li><a href="#" onclick="lcol='00FF00'; sendcmd(4-l,lcol);">Green</a></li>
+      <li><a href="#" onclick="lcol='0000FF'; sendcmd(4-l,lcol);">Blue</a></li>
+     </ul>
+    </div>
+
+   <div data-role="collapsible" data-collapsed="true">
+     <h4>Right Eye</h4>
+    <ul data-role="listview">
+      <li><a href="#" onclick="r=1; sendcmd(5,rcol);">Open</a></li>
+      <li><a href="#" onclick="r=0; sendcmd(6,rcol);">Close</a></li>
+      <li><a href="#" onclick="rcol='FFFFFF'; sendcmd(6-r,rcol);">White</a></li>
+      <li><a href="#" onclick="rcol='FF0000'; sendcmd(6-r,rcol);">Red</a></li>
+      <li><a href="#" onclick="rcol='00FF00'; sendcmd(6-r,rcol);">Green</a></li>
+      <li><a href="#" onclick="rcol='0000FF'; sendcmd(6-r,rcol);">Blue</a></li>
+     </ul>
+    </div>
+
+  </center>
+ 
+ </div>
+</div>
+
+
+</body>
+</html>
