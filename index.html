@@ -41,6 +41,9 @@ function sendcmd(a,b)
       <li><a href="#" onclick="sendcmd(1,10);">Up</a></li>
       <li><a href="#" onclick="sendcmd(1,80);">Side</a></li>
       <li><a href="#" onclick="sendcmd(1,170);">Down</a></li>
+      <li><a href="#" onclick="sendcmd(12,90);">Straight</a></li>
+      <li><a href="#" onclick="sendcmd(12,170);">Bent</a></li>
+
      </ul>
     </div>
     <div data-role="collapsible" data-collapsed="true">
@@ -49,6 +52,9 @@ function sendcmd(a,b)
       <li><a href="#" onclick="sendcmd(2,175);">Up</a></li>
       <li><a href="#" onclick="sendcmd(2,110);">Side</a></li>
       <li><a href="#" onclick="sendcmd(2,10);">Down</a></li>
+      <li><a href="#" onclick="sendcmd(13,90);">Straight</a></li>
+      <li><a href="#" onclick="sendcmd(13,0);">Bent</a></li>
+
      </ul>
     </div>
 
@@ -76,7 +82,24 @@ function sendcmd(a,b)
      </ul>
     </div>
 
+  <div data-role="collapsible" data-collapsed="true">
+     <h4>Rotate Head</h4>
+    <ul data-role="listview">
+      <li><a href="#" onclick="sendcmd(7,10);">Right</a></li>
+      <li><a href="#" onclick="sendcmd(7,90);">Middle</a></li>
+      <li><a href="#" onclick="sendcmd(7,170);">Left</a></li>
+     </ul>
+    </div>
   </center>
+
+  <div data-role="collapsible" data-collapsed="true">
+     <h4>General</h4>
+    <ul data-role="listview">
+      <li><a href="#" onclick="sendcmd(0,0);">Eyes Off</a></li>
+     </ul>
+    </div>
+  </center>
+
  
  </div>
 </div>
