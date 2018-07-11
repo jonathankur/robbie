@@ -3,24 +3,485 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Robbie</title>
+	<title>Steam</title>
  <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
 	<link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,700">
       <script src="http://code.jquery.com/jquery-1.11.2.min.js"></script>
 	<script src="jquery.mobile-1.4.5.min.js"></script>
 <script src="jquery-ui.js"></script>
 <script src='phonegap.js'></script>
-
+<script src='spectrum.js'></script>
+<link rel='stylesheet' href='spectrum.css' />
 <script type="text/javascript">
+(function(b){b.support.touch="ontouchend" in document;if(!b.support.touch){return;}var c=b.ui.mouse.prototype,e=c._mouseInit,a;function d(g,h){if(g.originalEvent.touches.length>1){return;}g.preventDefault();var i=g.originalEvent.changedTouches[0],f=document.createEvent("MouseEvents");f.initMouseEvent(h,true,true,window,1,i.screenX,i.screenY,i.clientX,i.clientY,false,false,false,false,0,null);g.target.dispatchEvent(f);}c._touchStart=function(g){var f=this;if(a||!f._mouseCapture(g.originalEvent.changedTouches[0])){return;}a=true;f._touchMoved=false;d(g,"mouseover");d(g,"mousemove");d(g,"mousedown");};c._touchMove=function(f){if(!a){return;}this._touchMoved=true;d(f,"mousemove");};c._touchEnd=function(f){if(!a){return;}d(f,"mouseup");d(f,"mouseout");if(!this._touchMoved){d(f,"click");}a=false;};c._mouseInit=function(){var f=this;f.element.bind("touchstart",b.proxy(f,"_touchStart")).bind("touchmove",b.proxy(f,"_touchMove")).bind("touchend",b.proxy(f,"_touchEnd"));e.call(f);};})(jQuery);
+</script>
+<script type="text/javascript">
+var ths='';
+var pgroup = 1;
+var thisproj=1;
+var thisblocks='';
+var thisblk=0;
+var thispos = 1;
+var thislength=0;
+var endaction=1;
+var tmpv=['','','','','','','','','','',''];
 
-var l=0;
-var r=0;
-var lcol='FFFFFF';
-var rcol='FFFFFF';
+$( function () {
 
-function sendcmd(a,b)
+  $("#col1").on( "vmousedown", function(event) {
+   var to = event.target ? event.target : event.toElement;
+   if (to.id.substr(0,3)==='blk') {
+     thisblk = parseInt(to.id.substr(3));
+   }
+  });
+ 
+  $("#project").droppable({
+            drop: function( event, ui ) {
+              var fnd=-1;
+   //           console.log('here '+event.clientX+' , '+event.clientY);
+              for (e=0; e<=thislength; e++) {
+                 var left=0, ltop=0;
+                 var myTarget=document.getElementById('inst'+e);
+                 while(myTarget!= document.body) { 
+                   ltop += myTarget.offsetTop; 
+                   left += myTarget.offsetLeft; 
+                   myTarget = myTarget.offsetParent; 
+                 } 
+  //               console.log("e="+e+" left="+left+" top="+ltop);
+                 if ((event.clientX >= left) && (event.clientY >= ltop) && (event.clientY < ltop + 70)) fnd=e;
+              }
+              if (fnd>=0) doaddblock(fnd);
+            }
+  });
+  $(document).on("vmouseup", function() {
+         if (thisblk) redraw();
+  });
+
+});
+
+
+function redraw()
 { 
-  var url='http://jaydenkur.com.au/steam/robot/sendcmd.php?a='+a+'&b='+b;
+  // console.log('ths=['+ths+']');
+  var h='<div style="height:50px; min-height:50px; display:inline; vertical-align:top"><a href="#" class="ui-btn ui-corner-all ui-btn-inline" style="background-color:#AA3333; color:white">BEGIN</a></div>';
+  var cnt=0;
+  if (ths.length) {
+    var b = ths.split('|');
+    var sz = b.length;
+    for (i=0; i<sz; i++) {
+      r = b[i].split('~');
+      bb = window.localStorage.getItem('block'+r[0]).split('|');
+      h += '<div class="inst" id="inst'+cnt+'" style="display:inline; vertical-align:top;  margin-left:5px" id="d'+cnt+'"><img src="ins4.png" style="width:45px" width="45" </div>';
+     if (bb[5]=='0') 
+      h+= '<div style="height:50px; min-height:50px; display:inline; vertical-align:top; margin-bottom:1px; margin-left:5px"><a href="#" class="ui-btn ui-corner-all ui-btn-inline" style="background-color:' + bb[2] + '; color:' + bb[3]+'" onclick="showparams('+cnt+');">' +  bb[1] + '</a></div>'; 
+     else {
+      var img = window.localStorage.getItem('img'+r[0]);
+     h+= '<div style="height:50px; min-height:50px; display:inline; margin-bottom:1px; vertical-align:top; margin-left:5px"><a href="#" class="ui-btn ui-corner-all ui-btn-inline" style="background-color:' + bb[2] + '; color:' + bb[3]+'; background-image:url(\'data:image/png;base64,'+img+'\'); background-repeat:no-repeat; background-position:center center" onclick="showparams('+cnt+');"> &nbsp; &nbsp; &nbsp; &nbsp; </a></div>'; 
+      }
+      cnt++;
+    }
+  }
+  h += '<div class="inst" id="inst'+cnt+'" style="display:inline; vertical-align:top; margin:0px 0px 1px 5px"><img src="ins4.png" style="width:45px" width="45" id="d'+cnt+'"></div>';
+  h += '<div style="height:50px; min-height:50px; display:inline; vertical-align:top; margin-left:5px"><a href="#" class="ui-btn ui-corner-all ui-btn-inline" onclick="showend('+cnt+');" style="background-color:#AA3333; color:white">END</a></div>';
+
+  thislength=cnt;
+  $("#project").html(h);
+  $("#project").trigger('create');
+  var p = '';
+  var b = thisblocks.split(',');
+  var sz=b.length;
+  var tt=20;
+  for (i=0; i<sz; i++) {
+     bb = window.localStorage.getItem('block'+b[i]).split('|');
+     if (bb[5]=='1') {
+       var img = window.localStorage.getItem('img'+b[i]);
+     p+= '<a href="#" draggable="true" id="blk' + b[i] + '" class="drg ui-btn ui-corner-all ui-btn-inline" style="background-color:' + bb[2] + '; color:' + bb[3]+'; margin-bottom:15px; background-image:url(\'data:image/png;base64,'+img+'\'); background-repeat:no-repeat; background-position:center center"> &nbsp; &nbsp; &nbsp; &nbsp; </a> &nbsp; '; 
+
+     }
+     else 
+     p+= '<a href="#" draggable="true" id="blk' + b[i] + '"  class="drg ui-btn ui-corner-all ui-btn-inline" style="background-color:' + bb[2] + '; color:' + bb[3]+'; margin-bottom:15px">' +  bb[1] + '</a> &nbsp; '; 
+  }
+  $("#col1").html(p);
+  $( "#col1" ).trigger( "create" );
+  $(".drg").draggable();
+  $("#params").html("<b>Parameters:-</b>");
+}
+
+function showend()
+{ var h = ' <b>Parameters:-</b><br><br><label for="endsel">Activity at End</label><select id="endsel" onchange="jsetend(this.value);">';
+  h += '<option value="1" '+(endaction==1 ? ' selected="selected"' : '')+'> HALT </option>';
+  h += '<option value="2" '+(endaction==2 ? ' selected="selected"' : '')+'> LOOP </option>';
+  h+'</select>';
+  $("#params").html(h);
+  $("#params").trigger('create');
+}
+
+
+function jsetend(a)
+{ endaction=a;
+}
+
+function showparams(a)
+{ var b = ths.split('|');
+  var vv = b[a].split('~');
+  var n = window.localStorage.getItem('block'+vv[0]).split('|');
+  var h = ' <b>Parameters:-</b><br><br><table><tbody>';
+  var sz=vv.length;
+  var ane=0;
+  thispos=a;
+
+  for (i=1; i<sz; i++) {
+     p = vv[i].split('^');
+     h+='<tr style="vertical-align:middle"><td style="width:25%; vertical-align:middle">';
+     switch (p[0]) {
+       case '1' : h += '<label for="num_'+i+'">'+p[1]+' ('+p[2]+' to '+p[3]+')</label></td><td style="width:15px;">&nbsp;</td><td style="vertical-align:middle; width:75%"><input type="number" id="num_'+i+'" name="num_'+i+'" data-highlight="true" min="'+p[2]+'" max="' + p[3]+'" value="' + p[4] + '" onchange="jsetval('+i+',this.value);">';
+                 ane=1;
+                 jsetval(i,p[4]);
+                break;
+       case '2' : h += '<label for="mul_'+i+'">'+p[1]+'</label></td><td style="width:15px;">&nbsp;</td><td style="vertical-align:middle; width:75%"><select id="mul_'+i+'" onchange="jsetval('+i+',this.value);">';
+                var ee=1;
+		  ane=1;
+                var ol = p[2];
+                for (e=3; e < p.length; e++, ee++) {
+                   var mp = p[e].split('='); 
+                   if (mp.length==2)
+                   h+= '<option value="'+ mp[0] + '"' + (mp[0] == ol ? ' selected="selected"' : '') + '> '+mp[1] + ' </option>';
+                }
+                h+='</select>';  
+                jsetval(i,ol);
+                break;
+       case '3' : toadd = '<label for="col_'+i+'">'+p[1]+'</label></td><td style="width:15px;">&nbsp;</td><td style="vertical-align:middle; width:75%"><input type="text" id="col_'+i+'" onchange="jsetval('+i+',this.value);"><script> $';
+                  toadd += '("#col_' + i + '").spectrum({color: "' + p[2] + '", showInput: true, preferredFormat: "hex"});';
+                  toadd += '<\/script>';
+                  h += toadd;
+			ane=1;
+                  jsetval(i,p[2]);
+     }
+     h+='</td></tr>';
+  }
+  h+='</tbody></table>';
+
+  if (!ane) 
+    h += '<p>No Parameters to Set</p>';
+  else {
+    h += '<br><a href="#" class="ui-btn ui-corner-all ui-btn-inline ui-icon-check ui-btn-icon-right" style="background-color:palegreen" onclick="jupdate()">SAVE</a> &nbsp; &nbsp; ';
+  }
+
+  h += '<a href="#" class="ui-btn ui-corner-all ui-btn-inline ui-icon-delete ui-btn-icon-right" style="background-color:#AA3333; color:white" onclick="showdeltr()">Delete</a><div id="deltr" style="display:none"><p>Really??</p><a href="#" class="ui-btn ui-corner-all ui-btn-inline ui-icon-check ui-btn-icon-right" onclick="dodelete()" style="color:white; background-color:#AA3333">Yes, Delete Block</a>';
+  // alert(h);
+  $("#params").html(h);
+  $("#params").trigger('create');
+}
+
+
+function jinit()
+{ var j = window.localStorage.getItem('masterlist');
+  if (!j) jsync();
+  else {
+    var h = '<p>Please Choose a Category below</p><fieldset data-role="controlgroup"><a href="#" class="ui-btn ui-corner-all ui-icon-carat-r ui-btn-icon-right" onclick="showlist(1)" style="background-color:lightskyblue">Beginner</a><a href="#" class="ui-btn ui-corner-all ui-icon-carat-r ui-btn-icon-right" onclick="showlist(2)" style="background-color:lightskyblue">Intermediate</a><a href="#" class="ui-btn ui-corner-all ui-icon-carat-r ui-btn-icon-right" onclick="showlist(3)" style="background-color:lightskyblue">Advanced</a></fieldset><br><br><div data-role="controlgroup" data-type="horizontal"><a href="#" class="ui-btn ui-corner-all ui-icon-bars ui-btn-icon-left" onclick="jload();">Saved Projects</a><a href="#" class="ui-btn ui-corner-all ui-icon-refresh ui-btn-icon-left" onclick="jsync()">Re-Sync</a></div>';
+    $("#myproj").html(h);
+    $("#myproj").trigger('create');
+  }
+};
+
+function jload()
+{ var a = window.localStorage.getItem('sall');
+  if (!a) {
+    h='<p>No projects saved yet</p>';
+  }
+  else {
+    h = '<table border="1" data-role="table" class="ui-responsive"><thead><tr style="background-color:#F6F6F6"><th style="text-align:center; width:20%">Date</th><th style="width:60%">Project</th><th style="text-align:center; width:10%">Edit</th><th style="text-align:center; width:10%">Delete</th></tr></thead><tbody>';
+    var pj = window.localStorage.getItem('masterlist').replace(/\|/g,"~").split('~');
+    var pp = a.split('|');
+    for (i=pp.length -1;  i>=0; i--) {
+      p = pp[i].split('^');
+      dt = new Date(Number(p[3]));
+      prjname='';
+      for (e=0; e< pj.length; e++) {
+         k = pj[e].split('^');
+         if (k[0]==p[1]) prjname=k[1];
+       }
+      h += '<tr><td style="text-align:center">' + dt.toDateString() + '<br>' + dt.toTimeString().substr(0,9) + '</td><td><b>' + p[2]+'</b><br><i>Project: ' +  prjname + '</i></td><td style="text-align:center"><a href="#" class="ui-btn ui-corner-all ui-btn-inline ui-icon-carat-r ui-btn-icon-notext" onclick="jgoback('+p[0]+',' + p[1] + ',' + p[4] + ');"> </a></td><td style="text-align:center"><a href="#dlist"  data-rel="popup" data-position-to="window" data-transition="pop" onclick="jproj('+p[0]+');" class="ui-btn ui-corner-all ui-btn-inline ui-icon-delete ui-btn-icon-notext" > </a></td></tr>';
+    }
+    h +='</table>';
+  }
+    h += '<br><a href="#" onclick="jinit();" class="ui-btn ui-corner-all ui-icon-home ui-btn-icon-left"> Return to Main Menu</a>';
+    $("#myproj").html(h);
+    $("#myproj").trigger('create');
+}
+
+function jproj(a)
+{ thisproj=a;
+}
+
+function jgoback(a,p,g)
+{  ths=window.localStorage.getItem('ths'+a);
+   thisproj=p;
+   pgroup = g;
+   goproject();
+}
+
+function jdellist()
+{  $("#dlist").popup('close');
+   var a = window.localStorage.getItem('sall').split('|');
+   var nw='';
+   for (i=0; i<a.length; i++) {
+      p=a[i].split('^');
+      if (p[0]==thisproj) {
+         window.localStorage.removeItem('ths'+p[0]);
+      }
+      else nw += '|' + a[i];
+   }
+   nw = nw.substr(1);
+   window.localStorage.setItem('sall',nw);
+   jload();
+}   
+
+function showlist(a)
+{ var j = window.localStorage.getItem('masterlist');
+  pgroup = a;
+  var l = j.split('|');
+  var t = l[a-1].split('~');
+  var sz = t.length;
+  var h = '<p>Please Choose a Project from the list below</p><fieldset data-role="controlgroup">';
+  for (i=0; i< sz; i++) {
+   f = t[i].split('^');
+   h += '<a href="#" class="ui-btn ui-corner-all ui-icon-carat-r ui-btn-icon-right" onclick="goproj('+i+');" style="background-color:lightskyblue">' + f[1] + '</a>';
+  }
+  h += '</fieldset><br><br><a href="#" class="ui-btn ui-corner-all ui-icon-home ui-btn-icon-left" onclick="jinit()"> Return to Main Menu</a>';
+    $("#myproj").html(h);
+    $("#myproj").trigger('create');
+}
+
+function goproj(a)
+{ var l = window.localStorage.getItem('masterlist').split('|');
+  var t = l[pgroup-1].split('~');
+  var p = t[a].split('^');
+  thisproj = p[0];
+  ths = '';
+  goproject();
+}
+
+function goproject()
+{ var l = window.localStorage.getItem('masterlist').split('|');
+  var t = l[pgroup-1].split('~');
+  for (i=0; i < t.length; i++) {
+     p = t[i].split('^');
+     if (p[0]  == thisproj) i=999999;
+  }
+  var h = '<div style="text-align:left; padding-left:20px"><h3>' + p[1] + '</h3><p>'+p[2]+'</p><br><b>Blocks Used :-</b><br><br>';
+  thisblocks = p[3];
+  var b = p[3].split(',');
+  var sz=b.length;
+  for (i=0; i<sz; i++) {
+     var bb = window.localStorage.getItem('block'+b[i]).split('|');
+     if (bb[5]=='1') {
+       var img = window.localStorage.getItem('img'+b[i]);
+       h+= '<a href="#" class="ui-btn ui-corner-all ui-btn-inline" style="background-color:' + bb[2] + '; color:' + bb[3]+'; margin-bottom:15px; margin-right:15px; background-image:url(\'data:image/png;base64,'+img+'\'); background-repeat:no-repeat; background-position:center center"> &nbsp; &nbsp; &nbsp; </a>'; 
+
+     }
+     else
+     h+= '<a href="#" class="ui-btn ui-corner-all ui-btn-inline" style="background-color:' + bb[2] + '; color:' + bb[3]+'; margin-bottom:15px; margin-right:15px">' +  bb[1] + '</a>'; 
+  }
+  h += '<br><br><fieldset data-role="controlgroup" data-type="horizontal"><a href="#" class="ui-btn ui-corner-all ui-icon-home ui-btn-icon-left" onclick="jinit()">Main Menu</a><a href="#" class="ui-btn ui-corner-all ui-icon-back ui-btn-icon-left" onclick="showlist(pgroup)">Back to List</a><a href="#" class="ui-btn ui-corner-all ui-icon-carat-r ui-btn-icon-right" onclick="doproj()" style="background-color:palegreen">'+ (ths.length ? 'Continue' : 'Start') + ' Project</a></fieldset></div>';
+  $("#myproj").html(h);
+  $("#myproj").trigger('create');
+}
+
+function doproj()
+{ // jQuery.mobile.changePage("#projpage", {transition: "flip"});
+  $.mobile.navigate("#projpage",{transition: "flip"});
+  redraw();
+}
+
+function doaddblock(posn)
+{ var nw='';
+ var a = thisblk;
+ var b = window.localStorage.getItem('block' + a).split('|');
+ var toadd = '' + a + '~' + b[0];
+
+ if (ths.length) {
+   var t = ths.split('|');
+   var sz=t.length;
+   for (i=0; i<=sz; i++) {
+    if (i==posn) nw += '|' + toadd;
+    if (i<sz) nw += '|' + t[i];
+   }
+   ths = nw.substr(1);
+  }
+  else ths = toadd;
+  thisblk=0;
+  redraw();
+}
+
+function jsetval(i,a)
+{ tmpv[i]=a;
+}
+
+
+function jupdate()
+{ var nwt='';
+  var b=ths.split('|');
+  var sz=b.length;
+  for (i=0; i<sz; i++)  
+    if (i != thispos) nwt += '|'+b[i];
+    else {
+      var p = b[i].split('~');
+      var nw = '' + p[0].toString();
+      var ane=0;
+      for (e=1; e<p.length; e++) {
+        j = p[e].split('^');
+        switch (parseInt(j[0])) {
+          case 1 : ane=1;
+                   nw += '~1^' + j[1] + '^' + j[2] + '^' + j[3] + '^' +  tmpv[e];
+                   break;
+          case 2 : ane=1;
+	           nw += '~2^' + j[1] + '^' + tmpv[e];
+                   for (k = 3; k < j.length; k++) nw += '^' + j[k];
+                   break;
+          case 3 : ane=1;
+		   nw += '~3^' + j[1] + '^' + tmpv[e];
+        }
+      }
+      if (!ane) nw += '^';
+      nwt += '|' + nw;
+    }
+ 
+  if (nwt.length)
+    nwt=nwt.substr(1);
+  ths=nwt;
+  redraw();
+}
+
+function showdeltr()
+{ $("#deltr").show();
+}
+
+function dodelete()
+{ var nw='';
+  var b=ths.split('|');
+  var sz=b.length;
+  for (i=0; i<sz; i++)  
+    if (i != thispos) nw += '|'+b[i];
+  if (nw.length)
+    nw=nw.substr(1);
+  ths=nw;
+  redraw();
+}
+
+function jclear()
+{ ths = '';
+  endaction=1;
+  redraw();
+}
+
+function jexit()
+{ $("#xit").popup('close');
+//  jQuery.mobile.changePage("#intropage", {transition: "flip"});
+  $.mobile.navigate("#intropage",{transition: "flip"});
+}
+
+function jsync()
+{ 
+  $("#myproj").html('<p>Syncing ...</p>1. Loading Projects<br>');
+  $("#myproj").trigger('create');
+  var url='http://jaydenkur.com.au/steam/outproj.php';
+  $.ajax({url: url, 
+    success : function(result) {
+      window.localStorage.setItem('masterlist',result);
+      jblock(); 
+    }
+  });
+}
+
+function jblock()
+{ var h = $("#myproj").html();
+  $("#myproj").html(h + '2. Loading Blocks<br>');
+  $("#myproj").trigger('create');
+  var url='http://jaydenkur.com.au/steam/outblock.php';
+  $.ajax({url: url, 
+    success : function(result) {
+      $.each(JSON.parse(result), function(index, value)
+      {
+     
+        window.localStorage.setItem('block'+index,value);
+      });
+      jimages(); 
+    }
+  });
+}
+
+function jimages()
+{ var h = $("#myproj").html();
+  $("#myproj").html(h + '3. Loading Block Images<br>');
+  $("#myproj").trigger('create');
+  var url='http://jaydenkur.com.au/steam/outimages.php';
+  $.ajax({url: url, 
+    success : function(result) {
+      $.each(JSON.parse(result), function(index, value)
+      {
+          window.localStorage.setItem('img'+index,value);
+      });
+      jinit(); 
+    }
+  });
+}
+
+function jsaveclr()
+{ $("#fname").val('');
+}
+ 
+function jsave()
+{ var j = window.localStorage.getItem('jcount');
+  if (!j) j='0';
+  var a = window.localStorage.getItem('sall');
+  if (!a) a='';
+  if (a.length) a += '|';
+  var nw = parseInt(j)+1;
+  var dt = new Date();
+  a += nw.toString() + '^' + thisproj.toString() + '^' + $("#fname").val() + '^' + dt.getTime().toString() + '^' + pgroup.toString();
+  window.localStorage.setItem('sall',a);
+  window.localStorage.setItem('jcount',nw.toString());
+  window.localStorage.setItem('ths'+nw.toString(),ths);
+  $("#sav").popup('close');
+}  
+
+function jsend()
+{  var oo='start(); ';
+  if (ths.length) {
+    var b = ths.split('|');
+    var sz = b.length;
+    for (ii=0; ii<sz; ii++) {
+      r = b[ii].split('~');
+      var o = '';
+      m = window.localStorage.getItem('block'+r[0]).split('|');
+      var t = m[4];
+      var cnt='';
+      var vl = ['','','','','','','','','','',''];
+      
+      for (e = 1 ; e< r.length; e++) {
+         f = r[e].split('^');
+         switch (f[0]) {
+            case '1' : vl[e] = f[4]; break;
+            case '2' : vl[e] = f[2]; break;
+            case '3' : vl[e] = "'" + f[2] + "'"; 
+         }
+      }
+      var i=0;
+      while (i< t.length) {
+        c = t.substr(i,1);
+        if (c=='$') {
+          c = parseInt(t.substr(++i,1));
+          o += vl[c];
+        }
+        else o += c;
+        i++;
+      }
+      oo += o + ' ';
+    }
+  }
+  oo += 'end('+endaction+');'; 
+  var url='http://jaydenkur.com.au/steam/robot/sendrobbie.php?cmd='+encodeURIComponent(oo);
   $.ajax({url: url, 
     success : function(result) {
     }
@@ -29,94 +490,69 @@ function sendcmd(a,b)
 
 </script>
 </head>
-
-<body onload="sendcmd(0,0)">
+<body onload="jinit()">
 <div data-role="page" id="intropage" >
  <div role="main" class="ui-content">
   <center>
-  <h3>Robbie Sample App</h3>
-    <div data-role="collapsible" data-collapsed="true">
-     <h4>Left Arm</h4>
-     <ul data-role="listview">
-      <li><a href="#" onclick="sendcmd(1,10);">Up</a></li>
-      <li><a href="#" onclick="sendcmd(1,80);">Side</a></li>
-      <li><a href="#" onclick="sendcmd(1,170);">Down</a></li>
-      <li><a href="#" onclick="sendcmd(12,90);">Straight</a></li>
-      <li><a href="#" onclick="sendcmd(12,170);">Bent</a></li>
-
-     </ul>
-    </div>
-    <div data-role="collapsible" data-collapsed="true">
-     <h4>Right Arm</h4>
-     <ul data-role="listview">
-      <li><a href="#" onclick="sendcmd(2,175);">Up</a></li>
-      <li><a href="#" onclick="sendcmd(2,110);">Side</a></li>
-      <li><a href="#" onclick="sendcmd(2,10);">Down</a></li>
-      <li><a href="#" onclick="sendcmd(13,90);">Straight</a></li>
-      <li><a href="#" onclick="sendcmd(13,0);">Bent</a></li>
-
-     </ul>
-    </div>
-
-   <div data-role="collapsible" data-collapsed="true">
-     <h4>Left Eye</h4>
-    <ul data-role="listview">
-      <li><a href="#" onclick="l=1; sendcmd(3,lcol);">Open</a></li>
-      <li><a href="#" onclick="l=0; sendcmd(4,lcol);">Close</a></li>
-      <li><a href="#" onclick="lcol='FFFFFF'; sendcmd(4-l,lcol);">White</a></li>
-      <li><a href="#" onclick="lcol='FF0000'; sendcmd(4-l,lcol);">Red</a></li>
-      <li><a href="#" onclick="lcol='00FF00'; sendcmd(4-l,lcol);">Green</a></li>
-      <li><a href="#" onclick="lcol='0000FF'; sendcmd(4-l,lcol);">Blue</a></li>
-     </ul>
-    </div>
-
-   <div data-role="collapsible" data-collapsed="true">
-     <h4>Right Eye</h4>
-    <ul data-role="listview">
-      <li><a href="#" onclick="r=1; sendcmd(5,rcol);">Open</a></li>
-      <li><a href="#" onclick="r=0; sendcmd(6,rcol);">Close</a></li>
-      <li><a href="#" onclick="rcol='FFFFFF'; sendcmd(6-r,rcol);">White</a></li>
-      <li><a href="#" onclick="rcol='FF0000'; sendcmd(6-r,rcol);">Red</a></li>
-      <li><a href="#" onclick="rcol='00FF00'; sendcmd(6-r,rcol);">Green</a></li>
-      <li><a href="#" onclick="rcol='0000FF'; sendcmd(6-r,rcol);">Blue</a></li>
-     </ul>
-    </div>
-
-  <div data-role="collapsible" data-collapsed="true">
-     <h4>Rotate Head</h4>
-    <ul data-role="listview">
-      <li><a href="#" onclick="sendcmd(7,10);">Right</a></li>
-      <li><a href="#" onclick="sendcmd(7,90);">Middle</a></li>
-      <li><a href="#" onclick="sendcmd(7,170);">Left</a></li>
-     </ul>
-    </div>
+  <h3>STEAM Sample App</h3>
+  <div id="myproj"></div>
   </center>
+  <div data-role="popup" id="dlist" data-overlay-theme="b" data-theme="b" style="max-width:400px">
+   <div data-role="header" data-theme="a"><h1>Delete Saved Project</h1></div>
+   <div role="main" class="ui-content">
+    <h3 class="i-title">Are you sure you want to delete the Project?</h3>
+    <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back">NO</a>
+    <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" onclick="jdellist()">Yes, Delete it</a>
+   </div>
+  </div>
 
-  <div data-role="collapsible" data-collapsed="true">
-     <h4>Mouth</h4>
-    <ul data-role="listview">
-      <li><a href="#" onclick="sendcmd(11,'M');">Happy</a></li>
-      <li><a href="#" onclick="sendcmd(11,'m');">Sad</a></li>
-      <li><a href="#" onclick="sendcmd(11,'-');">Closed</a></li>
-      <li><a href="#" onclick="sendcmd(11,'o');">Open</a></li>
-      <li><a href="#" onclick="sendcmd(11,'t');">Talking</a></li>
-     </ul>
-    </div>
-  </center>
+ </div>
+</div>
 
+<div data-role="page" id="projpage" >
+ <div data-role="header" data-position="fixed">
+  <h3>STEAM DEMO</h3>
+  <div data-role="navbar">
+   <ul>
+    <li><a href="#chkclr" data-rel="popup" data-position-to="window" data-transition="pop" data-icon="delete">Restart</a></li>
+    <li><a href="#sav" data-icon="lock" data-rel="popup" data-position-to="window" data-transition="pop" onclick="jsaveclr()">Save</a></li>
+    <li><a href="#" data-icon="action" onclick="jsend()">Send</a></li>
+    <li><a href="#" data-icon="home" onclick="jexit()">Exit</a></li>
+   </ul>
+  </div>
+ </div>
+ <div role="main" class="ui-content" style="min-height:1000px; background-color:#FAFAFA">
+<div style="background-color:white; border-bottom:1px solid gainsboro; width:100%" id="col1">
+</div>
+<div droppable="true" style="min-height:200px; width:100%" id="project"> </div>
+<div id="params" style="border-top:1px solid gainsboro; min-height:150px; width:100%"> <b>Parameters:-</b> </div>
 
+  <div data-role="popup" id="chkclr" data-overlay-theme="b" data-theme="b" style="max-width:400px">
+   <div data-role="header" data-theme="a"><h1>Clear Project</h1></div>
+   <div role="main" class="ui-content">
+    <h3 class="i-title">Are you sure you want to start again?</h3>
+    <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back">Cancel</a>
+    <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back" onclick="jclear()">Yes, do it</a>
+   </div>
+  </div>
+  <div data-role="popup" id="xit" data-overlay-theme="b" data-theme="b" style="max-width:400px">
+   <div data-role="header" data-theme="a"><h1>Leave Project</h1></div>
+   <div role="main" class="ui-content">
+    <h3 class="i-title">Are you sure you want to return to the Main Menu?</h3>
+    <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back">Cancel</a>
+    <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" onclick="jexit()">Yes, Leave</a>
+   </div>
+  </div>
 
-  <div data-role="collapsible" data-collapsed="true">
-     <h4>General</h4>
-    <ul data-role="listview">
-      <li><a href="#" onclick="sendcmd(0,0);">Eyes & Mouth Off</a></li>
-      <li><a href="#" onclick="sendcmd(10,'michelle');">Say Hi to Michelle</a></li>
-      <li><a href="#" onclick="sendcmd(10,'jake');">Say Hi to Jake</a></li>
-     </ul>
-    </div>
-  </center>
-
- 
+  <div data-role="popup" id="sav" data-overlay-theme="b" data-theme="b" style="width:600px; max-width:600px; min-width:600px">
+   <div data-role="header" data-theme="a"><h1>Save Project</h1></div>
+   <div role="main" class="ui-content">
+     <label for="fname">File Name:</label>
+     <input type="text" name="fname" id="fname"><br>
+    <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" data-rel="back">Cancel</a>
+    <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" onclick="jsave()">Save</a>
+   </div>
+  </div>
  </div>
 </div>
 
